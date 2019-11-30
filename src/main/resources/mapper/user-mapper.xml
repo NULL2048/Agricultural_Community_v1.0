@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="team.se.acommunity.dao.UserMapper">
+    <!--这个用来设置查询字段的，这样下面的查询命令就不用全都写了，而且如果表出现了修改也方便，直接在这里面改就全修改了，可以复用了-->
+    <sql id="selectFields">
+        id, username, password, salt, email, type, status, activation_code, header_url, create_time
+    </sql>
+
+    <sql id="insertFields">
+        username, password, salt, email, type, status, activation_code, header_url, create_time
+    </sql>
+
+    <select id="getById" resultType="User"> <!--本来这里写的返回值类型应该是类的完全路径，但是在application.properties配置文件中已经设置了用来存放实体类的包名，所以这里直接写类名就可以了-->
+        select <include refid="selectFields"></include>
+        from user
+        where id = #{id}
+    </select>
+
+    <select id="getByName" resultType="User"> <!--本来这里写的返回值类型应该是类的完全路径，但是在application.properties配置文件中已经设置了用来存放实体类的包名，所以这里直接写类名就可以了-->
+        select <include refid="selectFields"></include>
+        from user
+        where username = #{username}
+    </select>
+
+    <select id="getByEmail" resultType="User"> <!--本来这里写的返回值类型应该是类的完全路径，但是在application.properties配置文件中已经设置了用来存放实体类的包名，所以这里直接写类名就可以了-->
+        select <include refid="selectFields"></include>
+        from user
+        where email = #{email}
+    </select>
+
+    <!--这个写的参数名是User，在后面要配置这个User对象中哪一个属性是对应着数据库中的主键，这个keyProperty的值代表的就是User对象中的id属性对应着数据库的主键，因为这个id字段是数据库自己生成的，在插入的时候这个user是没有id属性的，数据库会先生成id值，需要先在数据库中取得这个id值，然后再放入这个user对象中，然后再插入数据库-->
+    <insert id="insertUser" parameterType="User" keyProperty="id">
+        insert into user (<include refid="insertFields"></include>)
+        values(#{username}, #{password}, #{salt}, #{email}, #{type}, #{status}, #{activationCode}, #{headerUrl}, #{createTime})
+    </insert>
+
+    <update id="updateStatus">
+        <!--因为用到了modul模板，所以他自己把传进来的参数封装成了对象，这里直接就是按照去对象中属性的方法来获得参数值的-->
+        update user set status = #{status} where id = #{id}
+    </update>
+
+    <update id="updateHeader">
+        update user set header_url = #{headerUrl} where id = #{id}
+    </update>
+
+    <update id="updatePassword">
+        update user set password = #{password} where id = #{id}
+    </update>
+</mapper>

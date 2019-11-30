@@ -1,0 +1,26 @@
+.main .container {
+	width: 720px;
+}
+.cent-box-header {
+	text-align: center;
+}
+.cent-box-header .main-title {
+	width: 132px;
+	height: 74px;
+	margin: 0 auto;
+	background: url('https://acommunity-header.oss-cn-beijing.aliyuncs.com/acommunity-header/%E6%83%A0%E5%86%9C.png') no-repeat;
+	background-size: contain;
+}
+.hide {
+	font: 0/0 a;
+	color: transparent;
+	text-shadow: none;
+	background-color: transparent;
+	border: 0;
+}
+.cent-box-header .sub-title {
+	margin: 30px 0 20px;
+	font-weight: 400;
+	font-size: 18px;
+	line-height: 1;
+}

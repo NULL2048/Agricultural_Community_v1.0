@@ -1,0 +1,40 @@
+<!--如果想直接访问某个静态的HTML页面，不通过controller路径访问的话，直接把这个页面放到static路径下面，这样就可以在浏览器直接在地址栏访问到
+比如说这个页面，访问的时候地址就是这个http://localhost:8080/ac/html/ajax-demo.html
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+    <p>
+        <input type="button" value="发送" onclick="send();">
+    </p>
+    <!--引入jquery包-->
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js" crossorigin="anonymous"></script>
+    <script>
+        function send() {
+            // 发送post请求
+            $.post(
+                // 设置访问路径
+                "/ac/alpha/ajax",
+                // 向服务器提交的数据，这里是json格式
+                {"name":"张三","age":13},
+                // 回调函数，是匿名的，当服务器得到发送给它的信息，像浏览器响应了之后，浏览器会自动调用这个匿名回调函数，将返回的数据传给这个data参数，传过来的数据是一个JSON格式的字符串
+                function (data) {
+                    // 显示data数据类型
+                    console.log(typeof(data));
+                    console.log(data);
+                    // 将data字符串转换成JS对象，这样使用的时候更方便，使用jquery去转换一下类型，他就把一个json格式的字符串封装进了js对象中
+                    data = $.parseJSON(data);
+                    console.log(typeof(data));
+                    // 直接调用js对象里面的属性
+                    console.log(data.code);
+                    console.log(data.msg);
+                }
+            );
+        }
+    </script>
+</body>
+</html>

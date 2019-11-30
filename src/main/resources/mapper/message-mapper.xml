@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="team.se.acommunity.dao.MessageMapper">
+
+    <sql id="selectFields">
+        id, from_id, to_id, conversation_id, content, status, create_time
+    </sql>
+
+    <sql id="insertFields">
+        from_id, to_id, conversation_id, content, status, create_time
+    </sql>
+
+    <select id="listConversations" resultType="Message">
+        select <include refid="selectFields"></include>
+        from message
+        where id in ( <!--因为内嵌的查询返回的是一组数据，所以这里需要用in，只要是存在的id，就都输出其详细内容-->
+            select max(id) <!--返回数据空中消息id最大的，也就是最新的私信的id-->
+            from message
+            where status != 2   <!--2表示被删除的会话-->
+            and from_id != 1 <!--1表示系统用户，即系统通知-->
+            and (from_id = #{userId} or to_id = #{userId}) <!--因为这个查找私信的用户可能是发送者，也可能是接收者，所以这里需要写一个或判断-->
+            group by conversation_id <!--要根据每一个会话进行分组，将每一个会话分成一组，然后返回最大的私信id，才能将每一个会话的最新私信内容返回,分组查询详看笔记-->
+        )
+        order by id desc <!--按照id倒序排列倒序排列，也就是私信最新的会话在上面，旧的在下面-->
+        limit #{offset}, #{limit} <!--支持分页-->
+    </select>
+
+    <select id="countConversation" resultType="int">
+        select count(m.maxid) from (
+            select max(id) as maxid <!--返回数据空中消息id最大的，也就是最新的私信的id-->
+            from message
+            where status != 2   <!--2表示被删除的会话-->
+            and from_id != 1 <!--1表示系统用户，即系统通知-->
+            and (from_id = #{userId} or to_id = #{userId}) <!--因为这个查找私信的用户可能是发送者，也可能是接收者，所以这里需要写一个或判断-->
+            group by conversation_id
+        ) as m <!--给整个表起了一个别名，上面给max(id)在这个m表里面也起了一个别名maxid，这样在最外层查找count时，就相当于统计m这个表中maxid这个字段的数据行数-->
+    </select>
+
+    <select id="listLetters" resultType="Message">
+        select <include refid="selectFields"></include>
+        from message
+        where status != 2
+        and from_id != 1
+        and conversation_id = #{conversationId}
+        order by id desc
+        limit #{offset}, #{limit}
+    </select>
+
+    <select id="countLetter" resultType="int">
+        select count(id)
+        from message
+        where status != 2
+        and from_id != 1
+        and conversation_id = #{conversationId}
+    </select>
+
+    <select id="countUnreadLetter" resultType="int">
+        select count(id)
+        from message
+        where status = 0 <!--0表示未读-->
+        and from_id != 1
+        and to_id = #{userId} <!--未读的私信必须是发送到这个用户的才算是未读-->
+        <if test="conversationId != null"> <!--动态处理一下这个参数-->
+            and conversation_id = #{conversationId}
+        </if>
+    </select>
+                         <!--因为id是自增字段，所以插入的时候传入的Java对象中是没有id这个属性值为空，所以在这里要标注出来传入的Java属性中哪一个属性是主键，所以这个里面写的是Java对象的属性名，然后执行完插入之后，就会把数据库自动生成的id值插入给传入的Java对象，这样在Java代码中就可以使用这个对象中的id属性了-->
+    <insert id="insertMessage" parameterType="Message" keyProperty="id">
+        insert into message(<include refid="insertFields"></include>)
+        values(#{fromId}, #{toId}, #{conversationId}, #{content}, #{status}, #{createTime})
+    </insert>
+    <!--参数是多个可以不用声明-->
+    <update id="updateStatus">
+        update message set status = #{status}
+        where id in
+        <!--因为传过来的是多个数组，所以这里where用in，而且下面需要用一个循环遍历出所有的结果成为一个集合放到in里面-->
+        <!--下面这个循环collection属性是指定要遍历的集合 item是指每一次遍历内容存储进的元素 open遍历以左括号开始 separator表示遍历结果以逗号分隔 close遍历以右括号结束-->
+        <foreach collection="ids" item="id" open="(" separator="," close=")"> <!--实际上这个就是一个拼接字符串的循环，将其拼接到代码中-->
+            #{id}
+        </foreach>
+    </update>
+
+    <select id="getLastedNotice" resultType="Message">
+        select <include refid="selectFields"></include>
+        from message
+        where id in (
+            select max(id)
+            from message
+            where status != 2
+            and from_id = 1
+            and to_id = #{userId}
+            and conversation_id = #{topic}
+        )
+    </select>
+
+    <select id="countNotice" resultType="int">
+        select count(id)
+        from message
+        where status != 2
+        and from_id = 1
+        and to_id = #{userId}
+        and conversation_id = #{topic}
+    </select>
+
+    <select id="countUnreadNotice" resultType="int">
+        select count(id)
+        from message
+        where status = 0
+        and from_id = 1
+        and to_id = #{userId}
+        <if test="topic!=null"> <!--因为希望不过是求某一个主题的未读数量，还需要求所有主题未读数量的和，这里就可以判断一下如果传入的topic为null就直接求所有主题的未读数量-->
+            and conversation_id = #{topic}
+        </if>
+    </select>
+
+    <select id="listNotices" resultType="Message">
+        select <include refid="selectFields"></include>
+        from message
+        where status != 2
+        and from_id = 1
+        and to_id = #{userId}
+        and conversation_id = #{topic}
+        order by create_time desc
+        limit #{offset}, #{limit}
+    </select>
+</mapper>
