@@ -80,7 +80,7 @@
 		<dependency>
 			<groupId>com.alibaba</groupId>
 			<artifactId>fastjson</artifactId>
-			<version>1.2.62</version>
+			<version>1.2.83</version>
 		</dependency>
 
 		<!--这个这个配置里面最好不要用自定义<version>标签，而是直接继承父类的<version>这样对当前版本的spring boot的兼容性是最好的，避免出现导包失败的情况，最上面<parent>标签里面的就是父类标签，下面的子标签如果有内容不写的话都会继承它里面的内容-->
